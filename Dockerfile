@@ -27,9 +27,6 @@ RUN echo "deb http://linux-packages.resilio.com/resilio-sync/deb resilio-sync no
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir /lan && chmod 0777 /lan
-VOLUME /lan
-
 COPY --from=resources /sync_server /
 
 RUN echo "alias eti='/etc/init.d/eti'" >> /root/.bashrc \
@@ -37,6 +34,10 @@ RUN echo "alias eti='/etc/init.d/eti'" >> /root/.bashrc \
     && update-rc.d -f resilio-sync remove \
     && chmod +x /etc/rc.local \
     && echo 'root:lan' | chpasswd
+
+RUN mkdir /lan && chmod 0777 /lan
+VOLUME /lan
+VOLUME /etc/iptables
 
 STOPSIGNAL SIGRTMIN+3
 EXPOSE 8888
