@@ -21,11 +21,14 @@ RUN apt-get update && apt-get install --no-install-recommends -y wget gnupg ca-c
 
 RUN echo "deb http://linux-packages.resilio.com/resilio-sync/deb resilio-sync non-free" > /etc/apt/sources.list.d/resilio-sync.list \
     && wget -qO - http://linux-packages.resilio.com/resilio-sync/key.asc | apt-key add - \
+    && wget -O resilio-sync.deb https://download-cdn.resilio.com/2.7.3.1381/Debian/resilio-sync_2.7.3.1381-1_amd64.deb \
     && apt-get update \
-    && apt-get install --no-install-recommends -y net-tools resilio-sync curl sqlite3 iptables iptables-persistent \
+    && apt-get install --no-install-recommends -y net-tools curl sqlite3 iptables iptables-persistent \
+    && dpkg -i resilio-sync.deb \
     && apt-mark hold resilio-sync \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -f resilio-sync.deb
 
 COPY --from=resources /sync_server /
 
