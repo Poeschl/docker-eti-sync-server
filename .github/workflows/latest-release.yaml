@@ -7,7 +7,10 @@ on:
 jobs:
   image:
     name: Build Docker image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: ↩️ Checkout
         uses: actions/checkout@v4
@@ -19,21 +22,27 @@ jobs:
           images: ghcr.io/poeschl/eti-sync-server
           tags: latest
 
-      - name: 🏗️ Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: 🚀 Build Image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          containerfiles: Dockerfile
+          context: .
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          # Disable layer caching
+          layers: false
 
       - name: 🔑 GHCR Login
-        uses: docker/login-action@v3
+        uses: redhat-actions/podman-login@v1
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🚀 Build and push
-        uses: docker/build-push-action@v6
+      - name: ⤴️ Push images
+        id: push-image
+        uses: redhat-actions/push-to-registry@v2
         with:
-          context: .
-          file: Dockerfile
-          push: true
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
