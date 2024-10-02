@@ -6,7 +6,7 @@ on:
 
 jobs:
   image:
-    name: Build Docker image
+    name: Build image
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -15,8 +15,8 @@ jobs:
       - name: ↩️ Checkout
         uses: actions/checkout@v4
 
-      - name: ℹ️ Docker meta
-        id: docker_meta
+      - name: ℹ️ Image meta
+        id: image_meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/poeschl/eti-sync-server
@@ -28,8 +28,8 @@ jobs:
         with:
           containerfiles: Dockerfile
           context: .
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ${{ steps.image_meta.outputs.tags }}
+          labels: ${{ steps.image_meta.outputs.labels }}
           # Disable layer caching
           layers: false
 
