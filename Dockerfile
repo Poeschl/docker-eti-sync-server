@@ -1,5 +1,5 @@
 FROM docker.io/debian:bookworm-slim as resources
-ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive TERM=xterm-256color
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
     wget tar ca-certificates sed
@@ -8,40 +8,29 @@ RUN wget https://www.eti-lan.xyz/sync_server.tar \
     && mkdir /sync_server \
     && tar xvf sync_server.tar -C /sync_server
 
-# Patch a permission change for /lan
-RUN sed -i '/start() {/a chmod -R 0777 /lan; ls -al /lan' /sync_server/etc/init.d/eti
+# Fix sync folder path
+RUN sed -i 's|/lan/|/$sync_dir/|' /sync_server/etc/init.d/eti
 
+# Patch resilio sync out of the init script
+RUN sed -i '/resilio-sync/s/^/#/' /sync_server/etc/init.d/eti
+
+# Patch iptables sync out of the init script
+# Firewalling should be handled by the host
+RUN sed -i '/iptables/s/^/#/' /sync_server/etc/init.d/eti \
+  && sed -i '/ip6tables/s/^/#/' /sync_server/etc/init.d/eti
+
+# Set the terminal width to a fixed value to avoid issues with the init script
+RUN sed -i 's/terminal_width=$(tput cols)/terminal_width=100/' /sync_server/etc/init.d/eti \
+ && sed -i '/clear/s/^/#/' /sync_server/etc/init.d/eti
 
 FROM docker.io/debian:bookworm-slim as running
-ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive TERM=xterm-256color
 
-RUN apt-get update && apt-get install --no-install-recommends -y wget gnupg ca-certificates systemd systemd-sysv iproute2 procps \
+RUN apt-get update && apt-get install --no-install-recommends -y curl sqlite3 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN echo "deb http://linux-packages.resilio.com/resilio-sync/deb resilio-sync non-free" > /etc/apt/sources.list.d/resilio-sync.list \
-    && wget -qO - http://linux-packages.resilio.com/resilio-sync/key.asc | apt-key add - \
-    && wget -O resilio-sync.deb https://download-cdn.resilio.com/2.7.3.1381/Debian/resilio-sync_2.7.3.1381-1_amd64.deb \
-    && apt-get update \
-    && apt-get install --no-install-recommends -y net-tools curl sqlite3 iptables iptables-persistent \
-    && dpkg -i resilio-sync.deb \
-    && apt-mark hold resilio-sync \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -f resilio-sync.deb
-
 COPY --from=resources /sync_server /
 
-RUN echo "alias eti='/etc/init.d/eti'" >> /root/.bashrc \
-    && update-rc.d eti defaults \
-    && update-rc.d -f resilio-sync remove \
-    && chmod +x /etc/rc.local \
-    && echo 'root:lan' | chpasswd
-
-RUN mkdir /lan && chmod 0777 /lan
-VOLUME /lan
-VOLUME /etc/iptables
-
-STOPSIGNAL SIGRTMIN+3
-EXPOSE 8888
-ENTRYPOINT ["/usr/sbin/init"]
+ENTRYPOINT ["/etc/init.d/eti"]
+CMD ["start"]
