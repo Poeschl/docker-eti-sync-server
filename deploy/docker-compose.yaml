@@ -1,33 +1,27 @@
 services:
   eti-sync-server:
-    image: ghcr.io/poeschl/eti-sync-server
+    image: ghcr.io/poeschl/eti-sync-server:${ETI_SYNC_SERVER_VERSION}
     depends_on:
       - resilio
     volumes:
-      - ./eti-config.conf:/root/eti-config.conf
-
-      # Keep this line in sync with the data directory in the resilio container
-      - resilio-data:/sync:z
-      #- ./resilio-data:/sync:z
+      - "./eti-config.conf:/root/eti-config.conf"
+      - "${RESILIO_SYNC_FOLDER}:/sync:z"
 
   resilio:
-    image: linuxserver/resilio-sync:2.8.1
-    # use the host_network or the ports. It's up to you.
-    #network_mode: host
-    ports:
-      - 8888:8888
-      - 55555:55555
+    image: linuxserver/resilio-sync:${RESILIO_VERSION}
+    restart: unless-stopped
+    # use the host network to support local multicast/broadcast discovery
+    network_mode: host
+    mem_limit: ${RESILIO_MEMORY_LIMIT}
     environment:
-      PUID: 1000
-      PGID: 1000
-      TZ: Europe/Berlin
+      PUID: ${USER_UID}
+      PGID: ${USER_GID}
+      TZ: ${RESILIO_TIMEZONE}
+      IS_ONLINE: ${RESILIO_IS_ONLINE}
     volumes:
-      - ./resilio-config.conf:/config/sync.conf
-
-      # Keep this line to let docker take care of the data directory
-      - resilio-data:/sync:z
-      # Otherwise use the next line to keep the data directory in the current directory
-      #- ./resilio-data:/sync:z
+      - "./custom-init:/etc/cont-init.d:ro"
+      - "./resilio-config.conf:/config/sync-base.conf:ro"
+      - "${RESILIO_SYNC_FOLDER}:/sync:z"
 
 volumes:
   resilio-data:

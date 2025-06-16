@@ -5,7 +5,8 @@ It will start the sync server inside a docker container and provides them locall
 
 ## Differences to the original server running in a VM
 
-* The container does not have any firewall functionality, so setting it to lan-only mode needs to be done by the host.
+* The container does not have any firewall functionality, but it prevents Resilio Sync from accessing the internet.
+  This means that the sync server can only be used locally.
 * The commands of the VM-based sync server are not available. 
   The server starts automatically in the container and shuts it down when the container stops, that's it.
 * There is no auto-update of the sync-server container itself, you need to pull the latest image manually.
@@ -16,10 +17,7 @@ It will start the sync server inside a docker container and provides them locall
 
 As a requirement for a successful operation make sure to have a __linux__ system and a __docker__ or a __rootful podman__ installation running.
 
-To make the setup as easy as possible a docker-compose.yaml and working config-files are provided in the `deploy` folder.
-Download it to a new folder and execute `podman-compose up -d` to run it in daemon mode in the background.
-The Resilio UI should be available under http://localhost:8888 and your hosts ip in the local network.
-(For the login look in the next section)
+Look at the [`deploy` folder's Readme](deploy/README.md) for setup instructions.
 
 ## Auth
 
