@@ -1,3 +1,8 @@
+## 🕸️ Deprecated
+
+This project will not recieve any more updates from my side. Look for the [pETI-server](https://github.com/Poeschl/pETI-server) for a updated ETI sync server controller.
+
+--------
 # Dockerized eti Sync Server
 
 This is a dockerized version of the [Sync Server of the eti Lan Tools](https://www.eti-lan.xyz/sync_server.php).
